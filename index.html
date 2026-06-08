@@ -679,7 +679,10 @@ body {
 </div><!-- /container -->
 
 <!-- No PDF.js needed - extraction done server-side -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 // ── State ────────────────────────────────────────────────
 let pdfBytes   = null;
 let extracted  = null;   // { awbNumber, wc, da, dc, cw }
@@ -713,7 +716,7 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catc
 window.addEventListener('load', async () => {
   if (location.search.includes('shared=1') && 'caches' in window) {
     try {
-      const cache = await caches.open('pccs-rate-v5.2');
+      const cache = await caches.open('pccs-rate-v5.3');
       const resp  = await cache.match('/__shared_pdf__');
       if (resp) {
         const blob     = await resp.blob();
@@ -799,34 +802,70 @@ $('fileInput').addEventListener('change', async e => {
 // Sends PDF to serverless function which runs pdftotext server-side.
 // No browser-side PDF parsing — 100% reliable.
 async function extractAWB(arrayBuffer) {
-  // Convert ArrayBuffer to base64
-  const bytes  = new Uint8Array(arrayBuffer);
-  let binary   = '';
-  for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-  const base64 = btoa(binary);
+  const pdf  = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const page = await pdf.getPage(1);
+  const tc   = await page.getTextContent();
+  const items = tc.items;
 
-  const resp = await fetch('/api/extract', {
-    method : 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body   : JSON.stringify({ pdf: base64 })
-  });
-
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({ error: `Server error ${resp.status}` }));
-    throw new Error(err.error || `Server error ${resp.status}`);
+  // AWB Number
+  let awbNumber = '312-XXXXXXXX';
+  for (const item of items) {
+    const m = item.str.match(/312[-_]\d{8}/);
+    if (m) { awbNumber = m[0].replace('_', '-'); break; }
   }
 
-  const data = await resp.json();
-  if (data.error) throw new Error(data.error);
+  // Label-based finder — verified across all IndiGo AWB versions
+  // WC/DA: labelY − 16.459pt  |  DC: labelY − 20.662pt
+  function findByLabel(patterns, offset, xMin=55, xMax=130, tol=6) {
+    for (const item of items) {
+      const up = item.str.trim().toUpperCase();
+      if (!patterns.some(p => up.includes(p))) continue;
+      const targetY = item.transform[5] - offset;
+      let best = null, bestDist = 999;
+      for (const item2 of items) {
+        const x2 = item2.transform[4], y2 = item2.transform[5];
+        if (x2 < xMin || x2 > xMax) continue;
+        const dist = Math.abs(y2 - targetY);
+        if (dist > tol) continue;
+        const m = item2.str.trim().match(/^[\d,]+\.\d{2}$/);
+        if (m) {
+          const val = parseFloat(m[0].replace(/,/g, ''));
+          if (val > 0 && dist < bestDist) { bestDist = dist; best = val; }
+        }
+      }
+      if (best !== null) return best;
+    }
+    return null;
+  }
 
-  return {
-    awbNumber : data.awbNumber || '312-XXXXXXXX',
-    wc        : data.wc,
-    da        : data.da,
-    dc        : data.dc,
-    cw        : data.cw,
-    tp        : data.tp
-  };
+  const wc = findByLabel(['WEIGHT CHARGE'], 16.459);
+  const da = findByLabel(['TOTAL OTHER CHARGES DUE AGENT',
+                          'OTHER CHARGES DUE AGENT'], 16.459) || 0;
+  const dc = findByLabel(['TOTAL OTHER CHARGES DUE CARRIER',
+                          'OTHER CHARGES DUE CARRIER'], 20.662);
+
+  // Chargeable Weight — first numeric in left column ABOVE "Weight Charge" label
+  let cwLabelY = null;
+  for (const item of items) {
+    if (item.str.trim().toUpperCase().includes('WEIGHT CHARGE')) {
+      cwLabelY = item.transform[5]; break;
+    }
+  }
+  let cw = null;
+  if (cwLabelY !== null) {
+    for (const item of items) {
+      const x = item.transform[4], y = item.transform[5];
+      if (x > 55 && x < 100 && y > cwLabelY) {
+        const m = item.str.trim().match(/^[\d,]+\.\d{2}$/);
+        if (m) {
+          const val = parseFloat(m[0].replace(/,/g, ''));
+          if (val > 0) { cw = val; break; }
+        }
+      }
+    }
+  }
+
+  return { awbNumber, wc, da, dc, cw, tp: null };
 }
 
 function checkExtracted(data) {
