@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PCCS Rate">
+<meta name="theme-color" content="#080c14">
+<title>PCCS Rate Calculator</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ── Root ─────────────────────────────────────────────────── */
+:root {
+  --bg:        #080c14;
+  --surface:   #0d1422;
+  --surface2:  #111d30;
+  --border:    rgba(99,179,255,0.12);
+  --border2:   rgba(99,179,255,0.22);
+  --accent:    #63b3ff;
+  --accent2:   #ff8c42;
+  --gold:      #ffd166;
+  --green:     #06d6a0;
+  --red:       #ff6b6b;
+  --text:      #e8f0fe;
+  --muted:     #5a7498;
+  --muted2:    #3a4e68;
+  --glow:      rgba(99,179,255,0.15);
+  --glow2:     rgba(255,140,66,0.12);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans Devanagari', sans-serif;
+  min-height: 100vh; min-height: 100dvh;
+  overflow-x: hidden;
+  background-image:
+    radial-gradient(ellipse 60% 40% at 80% 5%, rgba(99,179,255,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 35% at 10% 90%, rgba(255,140,66,0.07) 0%, transparent 55%),
+    radial-gradient(ellipse 30% 30% at 50% 50%, rgba(6,214,160,0.03) 0%, transparent 60%);
+}
+
+.container { max-width: 460px; margin: 0 auto; padding: 16px 16px 60px; }
+
+/* ── Header ──────────────────────────────────────────────── */
+.header {
+  display: flex; align-items: center; gap: 14px;
+  padding: 18px 0 22px;
+}
+
+.logo-wrap {
+  width: 46px; height: 46px; flex-shrink: 0;
+  position: relative;
+}
+.logo-hex {
+  width: 46px; height: 46px;
+  background: linear-gradient(135deg, #1a2d4a, #0d1d35);
+  border: 1.5px solid var(--accent);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 20px rgba(99,179,255,0.2), inset 0 0 20px rgba(99,179,255,0.05);
+  animation: logoPulse 3s ease-in-out infinite;
+}
+@keyframes logoPulse {
+  0%,100% { box-shadow: 0 0 20px rgba(99,179,255,0.2), inset 0 0 20px rgba(99,179,255,0.05); }
+  50%      { box-shadow: 0 0 32px rgba(99,179,255,0.35), inset 0 0 20px rgba(99,179,255,0.1); }
+}
+.logo-icon { font-size: 1.45rem; }
+
+.header-text { flex: 1; }
+.header-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.22rem; font-weight: 800; letter-spacing: 0.5px;
+  background: linear-gradient(135deg, var(--accent) 0%, #a8d8ff 50%, var(--accent2) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  line-height: 1.2;
+}
+.header-sub {
+  font-size: 0.68rem; color: var(--muted); letter-spacing: 1.5px;
+  text-transform: uppercase; margin-top: 2px;
+  font-family: 'Space Mono', monospace;
+}
+
+/* ── Reset Cache Button ──────────────────────────────────── */
+.reset-btn {
+  width: 38px; height: 38px; flex-shrink: 0;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 10px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; color: var(--muted);
+  transition: all 0.2s;
+}
+.reset-btn:active { transform: rotate(180deg) scale(0.9); color: var(--accent); border-color: var(--accent); }
+.reset-btn.spinning span { display: inline-block; animation: spin 0.6s linear; }
+
+
+/* ── Install Banner ──────────────────────────────────────── */
+.install-banner {
+  background: linear-gradient(135deg, rgba(99,179,255,0.08), rgba(255,140,66,0.06));
+  border: 1px solid var(--border2); border-radius: 14px;
+  padding: 12px 14px; margin-bottom: 16px;
+  display: flex; align-items: center; gap: 10px;
+  animation: slideDown 0.4s ease;
+}
+.install-banner.hidden { display: none; }
+@keyframes slideDown { from { opacity:0; transform: translateY(-8px); } to { opacity:1; transform: translateY(0); } }
+.install-banner p { font-size: 0.72rem; color: var(--text); line-height: 1.5; flex: 1; }
+.install-banner p strong { color: var(--accent); }
+.install-btn {
+  background: linear-gradient(135deg, var(--accent), #4a9de8);
+  border: none; border-radius: 8px; color: #080c14;
+  font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.78rem;
+  padding: 8px 13px; cursor: pointer; white-space: nowrap; letter-spacing: 0.5px;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.install-btn:active { transform: scale(0.96); }
+.close-btn { background: none; border: none; color: var(--muted); font-size: 1rem; cursor: pointer; padding: 4px; }
+
+/* ── Upload Zone ─────────────────────────────────────────── */
+.upload-card {
+  background: var(--surface);
+  border: 1.5px dashed var(--border2);
+  border-radius: 18px; padding: 24px 20px;
+  margin-bottom: 16px; cursor: pointer;
+  transition: border-color 0.3s, background 0.3s, transform 0.2s;
+  position: relative; overflow: hidden;
+  text-align: center;
+}
+.upload-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center, rgba(99,179,255,0.04) 0%, transparent 70%);
+  opacity: 0; transition: opacity 0.3s;
+}
+.upload-card:hover::before, .upload-card.ready::before { opacity: 1; }
+.upload-card.ready {
+  border-color: var(--green); border-style: solid;
+  background: rgba(6,214,160,0.04);
+}
+.upload-card:active { transform: scale(0.99); }
+
+.upload-icon-wrap {
+  width: 56px; height: 56px; margin: 0 auto 12px;
+  background: linear-gradient(135deg, rgba(99,179,255,0.12), rgba(99,179,255,0.06));
+  border: 1px solid var(--border2); border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.3s;
+}
+.upload-card.ready .upload-icon-wrap {
+  background: linear-gradient(135deg, rgba(6,214,160,0.15), rgba(6,214,160,0.07));
+  border-color: rgba(6,214,160,0.4);
+}
+.upload-icon { font-size: 1.6rem; }
+.upload-title {
+  font-family: 'Syne', sans-serif; font-size: 0.95rem; font-weight: 700;
+  color: var(--text); margin-bottom: 4px;
+}
+.upload-sub { font-size: 0.72rem; color: var(--muted); line-height: 1.5; }
+.upload-card.ready .upload-title { color: var(--green); }
+
+.file-badge {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: rgba(6,214,160,0.1); border: 1px solid rgba(6,214,160,0.3);
+  border-radius: 20px; padding: 5px 12px; margin-top: 10px;
+  font-size: 0.73rem; color: var(--green);
+  font-family: 'Space Mono', monospace;
+}
+.file-badge.hidden { display: none; }
+
+#fileInput { display: none; }
+
+/* ── Mode Selector ───────────────────────────────────────── */
+.mode-row {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 10px; margin-bottom: 16px;
+}
+.mode-btn {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 14px; padding: 14px 12px;
+  cursor: pointer; text-align: center;
+  transition: all 0.25s; position: relative; overflow: hidden;
+  -webkit-user-select: none; user-select: none;
+}
+.mode-btn::after {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(circle at center, rgba(99,179,255,0.12) 0%, transparent 70%);
+  opacity: 0; transition: opacity 0.3s;
+}
+.mode-btn:active::after { opacity: 1; }
+.mode-btn.active {
+  border-color: var(--accent);
+  background: linear-gradient(135deg, rgba(99,179,255,0.1), rgba(99,179,255,0.04));
+  box-shadow: 0 0 0 1px rgba(99,179,255,0.2), 0 4px 20px rgba(99,179,255,0.12);
+}
+.mode-btn.active-orange {
+  border-color: var(--accent2);
+  background: linear-gradient(135deg, rgba(255,140,66,0.1), rgba(255,140,66,0.04));
+  box-shadow: 0 0 0 1px rgba(255,140,66,0.2), 0 4px 20px rgba(255,140,66,0.12);
+}
+.mode-btn.disabled-btn { opacity: 0.4; cursor: not-allowed; }
+.mode-emoji { font-size: 1.5rem; display: block; margin-bottom: 5px; }
+.mode-label {
+  font-family: 'Syne', sans-serif; font-size: 0.82rem; font-weight: 700;
+  color: var(--muted); display: block; letter-spacing: 0.5px;
+}
+.mode-btn.active .mode-label { color: var(--accent); }
+.mode-btn.active-orange .mode-label { color: var(--accent2); }
+
+/* ── Card ────────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px; padding: 18px;
+  margin-bottom: 14px;
+  animation: cardIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.card.hidden { display: none; }
+
+.card-header {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 16px;
+}
+.card-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+  animation: dotBlink 2s ease-in-out infinite;
+}
+@keyframes dotBlink { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+.card-dot.orange { background: var(--accent2); box-shadow: 0 0 8px var(--accent2); }
+.card-title-text {
+  font-family: 'Syne', sans-serif; font-size: 0.85rem; font-weight: 700;
+  letter-spacing: 1px; color: var(--accent); text-transform: uppercase;
+}
+.card-title-text.orange { color: var(--accent2); }
+
+/* ── Data Rows (extracted info) ──────────────────────────── */
+.data-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 8px; margin-bottom: 14px;
+}
+.data-item {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 12px;
+  position: relative; overflow: hidden;
+}
+.data-item::before {
+  content: ''; position: absolute; top: 0; left: 0;
+  width: 3px; height: 100%;
+  background: var(--accent); border-radius: 0 2px 2px 0;
+}
+.data-item.full { grid-column: span 2; }
+.data-item.green-line::before { background: var(--green); }
+.data-item.gold-line::before  { background: var(--gold); }
+.data-lbl { font-size: 0.62rem; color: var(--muted); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 3px; font-family: 'Space Mono', monospace; }
+.data-val {
+  font-family: 'Space Mono', monospace; font-size: 0.88rem; font-weight: 700;
+  color: var(--text);
+}
+.data-val.accent { color: var(--accent); }
+.data-val.green  { color: var(--green); }
+.data-val.gold   { color: var(--gold); }
+.data-val.orange { color: var(--accent2); }
+
+/* ── AWB Badge ───────────────────────────────────────────── */
+.awb-badge {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 10px; padding: 10px 14px; margin-bottom: 14px;
+}
+.awb-badge-label { font-size: 0.62rem; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; font-family: 'Space Mono', monospace; }
+.awb-badge-num {
+  font-family: 'Space Mono', monospace; font-size: 0.92rem; font-weight: 700;
+  color: var(--accent);
+}
+
+/* ── Result Box (Per Kg) ─────────────────────────────────── */
+.result-hero {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 14px; padding: 20px 18px;
+  text-align: center; margin-top: 4px;
+}
+.result-hero-label { font-size: 0.62rem; color: var(--muted); letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 8px; font-family: 'Space Mono', monospace; }
+.result-hero-amount {
+  font-family: 'Space Mono', monospace; font-size: 2rem; font-weight: 700;
+  color: #7ec8ff;
+  line-height: 1; margin-bottom: 6px;
+  animation: fadeUp 0.3s ease-out both;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.result-hero-sub { font-size: 0.7rem; color: var(--muted); font-family: 'Space Mono', monospace; }
+
+/* ── Discount Tabs ───────────────────────────────────────── */
+.disc-tabs {
+  display: flex; background: var(--surface2);
+  border: 1px solid var(--border); border-radius: 12px;
+  padding: 4px; gap: 4px; margin-bottom: 16px;
+}
+.disc-tab {
+  flex: 1; padding: 9px 0; border-radius: 9px; border: none;
+  background: transparent; cursor: pointer;
+  font-family: 'Syne', sans-serif; font-size: 0.82rem; font-weight: 700;
+  color: var(--muted); letter-spacing: 0.5px;
+  transition: all 0.25s;
+}
+.disc-tab.active {
+  background: linear-gradient(135deg, rgba(255,140,66,0.2), rgba(255,140,66,0.1));
+  color: var(--accent2);
+  box-shadow: 0 0 0 1px rgba(255,140,66,0.25);
+}
+
+/* ── Input ───────────────────────────────────────────────── */
+.input-wrap { position: relative; margin-bottom: 14px; }
+.input-prefix {
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  font-family: 'Space Mono', monospace; font-size: 0.9rem; font-weight: 700;
+  color: var(--muted); pointer-events: none; z-index: 1;
+  transition: color 0.2s;
+}
+.input-field {
+  width: 100%;
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  border-radius: 12px; padding: 14px 14px 14px 34px;
+  font-family: 'Space Mono', monospace; font-size: 1.1rem; font-weight: 700;
+  color: var(--text); outline: none;
+  transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+  -webkit-appearance: none; appearance: none;
+}
+.input-field:focus {
+  border-color: var(--accent2);
+  box-shadow: 0 0 0 3px rgba(255,140,66,0.12), 0 0 20px rgba(255,140,66,0.08);
+  background: rgba(255,140,66,0.03);
+}
+.input-field:focus + .input-focus-line, .input-field:focus ~ .input-prefix { color: var(--accent2); }
+.input-field::placeholder { color: var(--muted2); font-size: 0.85rem; }
+
+/* ── Calculate Button ────────────────────────────────────── */
+.calc-btn {
+  width: 100%; padding: 15px;
+  background: linear-gradient(135deg, rgba(255,140,66,0.9), rgba(255,160,90,0.8));
+  border: none; border-radius: 14px;
+  font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 800;
+  color: #0d0a06; letter-spacing: 0.5px; cursor: pointer;
+  position: relative; overflow: hidden;
+  box-shadow: 0 4px 20px rgba(255,140,66,0.3);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.calc-btn::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%);
+}
+.calc-btn:active { transform: scale(0.97); box-shadow: 0 2px 10px rgba(255,140,66,0.2); }
+.calc-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+/* ── Discount Result ─────────────────────────────────────── */
+.disc-result {
+  background: linear-gradient(135deg, rgba(255,140,66,0.08), rgba(255,209,102,0.05));
+  border: 1.5px solid rgba(255,140,66,0.25);
+  border-radius: 16px; padding: 20px 18px;
+  animation: cardIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.disc-result.hidden { display: none; }
+
+.disc-result-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 0; border-bottom: 1px solid rgba(255,140,66,0.1);
+}
+.disc-result-row:last-child { border-bottom: none; padding-bottom: 0; }
+.disc-result-row.final {
+  padding-top: 12px; margin-top: 4px;
+  border-top: 1px solid rgba(255,140,66,0.2); border-bottom: none;
+}
+.drr-lbl { font-size: 0.72rem; color: var(--muted); font-family: 'Space Mono', monospace; }
+.drr-val {
+  font-family: 'Space Mono', monospace; font-size: 0.9rem; font-weight: 700;
+  color: var(--text);
+}
+.drr-val.red  { color: var(--red); }
+.drr-val.big  {
+  font-family: 'Space Mono', monospace; font-size: 1.4rem; font-weight: 700;
+  color: #ffb347;
+  animation: fadeUp 0.3s ease-out both;
+}
+
+/* ── Error ───────────────────────────────────────────────── */
+.err-box {
+  background: rgba(255,107,107,0.08); border: 1px solid rgba(255,107,107,0.3);
+  border-radius: 10px; padding: 11px 14px; margin-top: 10px;
+  font-size: 0.78rem; color: var(--red); line-height: 1.5;
+  animation: shake 0.3s ease;
+}
+.err-box.hidden { display: none; }
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20%,60%  { transform: translateX(-4px); }
+  40%,80%  { transform: translateX(4px); }
+}
+
+/* ── Extracting Spinner ──────────────────────────────────── */
+.extracting {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px; background: var(--surface2); border-radius: 12px;
+  margin-top: 4px;
+}
+.extracting.hidden { display: none; }
+.spinner {
+  width: 18px; height: 18px; border: 2px solid var(--border2);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin 0.7s linear infinite; flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.extracting-txt { font-size: 0.78rem; color: var(--muted); font-family: 'Space Mono', monospace; }
+
+/* ── Hint text ───────────────────────────────────────────── */
+.hint {
+  text-align: center; font-size: 0.68rem; color: var(--muted2);
+  padding: 10px 0; line-height: 1.6;
+}
+
+/* ── Glow divider ────────────────────────────────────────── */
+.glow-divider {
+  height: 1px; margin: 6px 0;
+  background: linear-gradient(90deg, transparent, rgba(99,179,255,0.2), transparent);
+}
+
+/* ── Shimmer overlay for loading state ───────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.shimmer {
+  background: linear-gradient(90deg, var(--surface2) 25%, rgba(99,179,255,0.08) 50%, var(--surface2) 75%);
+  background-size: 200% auto;
+  animation: shimmer 1.4s linear infinite;
+  border-radius: 8px; height: 16px;
+}
+
+/* ── Hidden ──────────────────────────────────────────────── */
+.hidden { display: none !important; }
+
+/* ── Ripple ──────────────────────────────────────────────── */
+.ripple-parent { position: relative; overflow: hidden; }
+.ripple {
+  position: absolute; border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  transform: scale(0); animation: rippleAnim 0.5s linear;
+  pointer-events: none;
+}
+@keyframes rippleAnim { to { transform: scale(4); opacity: 0; } }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo-wrap">
+      <div class="logo-hex">
+        <span class="logo-icon">✈️</span>
+      </div>
+    </div>
+    <div class="header-text">
+      <div class="header-title">PCCS Rate Calc</div>
+      <div class="header-sub">AWB · IndiGo · v5.2</div>
+    </div>
+    <button class="reset-btn" id="resetCacheBtn" onclick="resetCache()" title="Cache clear karo">
+      <span>↺</span>
+    </button>
+  </div>
+
+  <!-- Install Banner -->
+  <div class="install-banner hidden" id="installBanner">
+    <p>📲 Home Screen पर add करो — <strong>Tap करके open होगा instantly</strong></p>
+    <button class="install-btn" id="installBtn">Install</button>
+    <button class="close-btn" id="closeInstall">✕</button>
+  </div>
+
+  <!-- Upload Zone -->
+  <div class="upload-card" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+    <div class="upload-icon-wrap">
+      <span class="upload-icon" id="uzIcon">📄</span>
+    </div>
+    <div class="upload-title" id="uzTitle">AWB PDF Upload करो</div>
+    <div class="upload-sub" id="uzSub">WhatsApp से PDF share करो<br>या यहाँ tap करके select करो</div>
+    <div class="file-badge hidden" id="fileBadge">
+      <span>✓</span>
+      <span id="fileName">—</span>
+      <span id="fileSize">—</span>
+    </div>
+  </div>
+  <input type="file" id="fileInput" accept="application/pdf">
+
+  <!-- Mode Buttons -->
+  <div class="mode-row">
+    <div class="mode-btn disabled-btn" id="modePerKg" onclick="switchMode('perkg')">
+      <span class="mode-emoji">📊</span>
+      <span class="mode-label">Per Kg Rate</span>
+    </div>
+    <div class="mode-btn disabled-btn" id="modeDiscount" onclick="switchMode('discount')">
+      <span class="mode-emoji">🏷️</span>
+      <span class="mode-label">Discount</span>
+    </div>
+  </div>
+
+  <!-- Hint when no PDF -->
+  <div class="hint" id="hintText">⬆ पहले PDF upload करो, फिर mode select करो</div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- PER KG MODE -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="card hidden" id="perKgCard">
+    <div class="card-header">
+      <div class="card-dot"></div>
+      <span class="card-title-text">Per Kg Rate (incl. GST)</span>
+    </div>
+
+    <!-- Extracting spinner -->
+    <div class="extracting hidden" id="pkExtracting">
+      <div class="spinner"></div>
+      <span class="extracting-txt">PDF से data extract हो रहा है...</span>
+    </div>
+
+    <!-- AWB Badge -->
+    <div class="awb-badge hidden" id="pkAwbBadge">
+      <span class="awb-badge-label">AWB Number</span>
+      <span class="awb-badge-num" id="pkAwbNum">—</span>
+    </div>
+
+    <!-- Data breakdown -->
+    <div class="data-grid hidden" id="pkDataGrid">
+      <div class="data-item">
+        <div class="data-lbl">Weight Charge</div>
+        <div class="data-val accent" id="pkWc">—</div>
+      </div>
+      <div class="data-item">
+        <div class="data-lbl">Due Agent</div>
+        <div class="data-val accent" id="pkDa">—</div>
+      </div>
+      <div class="data-item">
+        <div class="data-lbl">Due Carrier</div>
+        <div class="data-val accent" id="pkDc">—</div>
+      </div>
+      <div class="data-item">
+        <div class="data-lbl">Chargeable Wt</div>
+        <div class="data-val accent" id="pkCw">—</div>
+      </div>
+      <div class="data-item full">
+        <div class="data-lbl">Base Prepaid (WC+DA+DC)</div>
+        <div class="data-val" id="pkBase">—</div>
+      </div>
+      <div class="data-item">
+        <div class="data-lbl">GST 18%</div>
+        <div class="data-val gold" id="pkGst">—</div>
+      </div>
+      <div class="data-item green-line">
+        <div class="data-lbl">Total Prepaid+GST</div>
+        <div class="data-val green" id="pkTotal">—</div>
+      </div>
+    </div>
+
+    <div class="glow-divider" id="pkDivider" style="display:none"></div>
+
+    <!-- RESULT -->
+    <div class="result-hero hidden" id="pkResult">
+      <div class="result-hero-label">📦 Per Kg Rate (incl. GST)</div>
+      <div class="result-hero-amount" id="pkRate">—</div>
+      <div class="result-hero-sub" id="pkCalcStr">— ÷ — kg</div>
+    </div>
+
+    <!-- Error -->
+    <div class="err-box hidden" id="pkErr"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- DISCOUNT MODE -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="card hidden" id="discCard">
+    <div class="card-header">
+      <div class="card-dot orange"></div>
+      <span class="card-title-text orange">Discount Calculator</span>
+    </div>
+
+    <!-- Extracting -->
+    <div class="extracting hidden" id="discExtracting">
+      <div class="spinner"></div>
+      <span class="extracting-txt">PDF से data extract हो रहा है...</span>
+    </div>
+
+    <!-- AWB + WC + CW info panel -->
+    <div class="hidden" id="discInfo">
+      <!-- Bottom data panel - clearly visible extracted values -->
+      <div class="data-grid" style="margin-bottom:14px">
+        <div class="data-item full">
+          <div class="data-lbl">AWB Number</div>
+          <div class="data-val accent" id="discAwbNum">—</div>
+        </div>
+        <div class="data-item">
+          <div class="data-lbl">Weight Charge</div>
+          <div class="data-val accent" id="discWcVal">—</div>
+        </div>
+        <div class="data-item">
+          <div class="data-lbl">Chargeable Wt</div>
+          <div class="data-val accent" id="discCwVal">—</div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="disc-tabs">
+        <button class="disc-tab active" id="tabRupee" onclick="discPickTab('rupee')">₹ Rupees</button>
+        <button class="disc-tab" id="tabPct" onclick="discPickTab('pct')">% Percentage</button>
+      </div>
+
+      <!-- Rupee input -->
+      <div class="input-wrap" id="rupeeWrap">
+        <span class="input-prefix">₹</span>
+        <input type="number" class="input-field" id="discRupeeInput"
+               inputmode="decimal" step="0.01" placeholder="Rate per kg (e.g. 5)"
+               oninput="clearDiscResult()">
+      </div>
+
+      <!-- Percent input -->
+      <div class="input-wrap hidden" id="pctWrap">
+        <span class="input-prefix">%</span>
+        <input type="number" class="input-field" id="discPctInput"
+               inputmode="decimal" step="0.01" min="0" max="100" placeholder="Discount % (e.g. 12)"
+               oninput="clearDiscResult()">
+      </div>
+
+      <!-- Calculate Button -->
+      <button class="calc-btn ripple-parent" onclick="calcDiscount(event)">
+        Calculate करो
+      </button>
+
+      <!-- Error -->
+      <div class="err-box hidden" id="discErr"></div>
+    </div>
+
+    <!-- Discount Result -->
+    <div class="disc-result hidden" id="discResult">
+      <div class="disc-result-row" id="drCalcRow">
+        <span class="drr-lbl" id="drCalcLbl">Calc</span>
+        <span class="drr-val" id="drCalc">—</span>
+      </div>
+      <div class="disc-result-row">
+        <span class="drr-lbl">Weight Charge</span>
+        <span class="drr-val" id="drWc">—</span>
+      </div>
+      <div class="disc-result-row">
+        <span class="drr-lbl" id="drDiscLbl">Discount</span>
+        <span class="drr-val red" id="drDisc">—</span>
+      </div>
+      <div class="disc-result-row final">
+        <span class="drr-lbl">After Discount</span>
+        <span class="drr-val big" id="drFinal">—</span>
+      </div>
+    </div>
+
+    <div class="err-box hidden" id="discCardErr"></div>
+  </div>
+
+</div><!-- /container -->
+
+<!-- No PDF.js needed - extraction done server-side -->
+<script>
+// ── State ────────────────────────────────────────────────
+let pdfBytes   = null;
+let extracted  = null;   // { awbNumber, wc, da, dc, cw }
+let activeMode = null;   // 'perkg' | 'discount'
+let discTab    = 'rupee';
+let deferredPrompt = null;
+
+// ── Helpers ──────────────────────────────────────────────
+const r2  = n => Math.round(n * 100) / 100;
+const fmt = n => n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+const $   = id => document.getElementById(id);
+const show = id => $(id).classList.remove('hidden');
+const hide = id => $(id).classList.add('hidden');
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── Install PWA ───────────────────────────────────────────
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredPrompt = e;
+  show('installBanner');
+});
+$('installBtn').addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt(); await deferredPrompt.userChoice;
+  deferredPrompt = null; hide('installBanner');
+});
+$('closeInstall').addEventListener('click', () => hide('installBanner'));
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+
+// ── WhatsApp Share: auto-load shared PDF ─────────────────
+window.addEventListener('load', async () => {
+  if (location.search.includes('shared=1') && 'caches' in window) {
+    try {
+      const cache = await caches.open('pccs-rate-v5.2');
+      const resp  = await cache.match('/__shared_pdf__');
+      if (resp) {
+        const blob     = await resp.blob();
+        const fileName = resp.headers.get('X-File-Name') || 'shared.pdf';
+        const file     = new File([blob], fileName, { type: 'application/pdf' });
+        await cache.delete('/__shared_pdf__');
+        await handleFile(file);
+        history.replaceState({}, '', '/index.html');
+      }
+    } catch(e) { console.warn('Share load error:', e); }
+  }
+});
+
+// ── Reset Cache ───────────────────────────────────────────
+async function resetCache() {
+  const btn = $('resetCacheBtn');
+  btn.classList.add('spinning');
+  try {
+    // Clear all caches
+    const keys = await caches.keys();
+    await Promise.all(keys.map(k => caches.delete(k)));
+    // Unregister SW
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.unregister()));
+    }
+    // Reset app state
+    pdfBytes  = null;
+    extracted = null;
+    activeMode = null;
+    // Reset UI
+    $('uploadZone').classList.remove('ready');
+    $('uzIcon').textContent  = '📄';
+    $('uzTitle').textContent = 'AWB PDF Upload करो';
+    $('uzSub').textContent   = 'WhatsApp से PDF share करो\nया यहाँ tap करके select करो';
+    hide('fileBadge');
+    hide('perKgCard'); hide('discCard');
+    show('hintText');
+    $('modePerKg').classList.remove('active','active-orange','disabled-btn');
+    $('modeDiscount').classList.remove('active','active-orange','disabled-btn');
+    $('modePerKg').classList.add('disabled-btn');
+    $('modeDiscount').classList.add('disabled-btn');
+    // Small delay then reload fresh
+    setTimeout(() => location.reload(true), 400);
+  } catch(e) {
+    console.error('Reset error:', e);
+    location.reload(true);
+  }
+}
+
+// ── File Handling (common) ────────────────────────────────
+async function handleFile(file) {
+  if (!file || file.type !== 'application/pdf') return;
+
+  pdfBytes  = await file.arrayBuffer();
+  extracted = null;
+
+  // UI update
+  $('fileName').textContent = file.name.length > 22 ? file.name.slice(0,20)+'…' : file.name;
+  $('fileSize').textContent = (file.size / 1024).toFixed(1) + ' KB';
+  show('fileBadge');
+  $('uploadZone').classList.add('ready');
+  $('uzTitle').textContent = 'File Ready ✅';
+  $('uzSub').textContent   = 'Change करने के लिए tap करो';
+  $('uzIcon').textContent  = '✅';
+
+  ['modePerKg','modeDiscount'].forEach(id => {
+    $(id).classList.remove('disabled-btn');
+  });
+  hide('hintText');
+
+  if (activeMode === 'perkg')    runPerKg();
+  if (activeMode === 'discount') runDiscount();
+}
+
+// ── File Input ────────────────────────────────────────────
+$('fileInput').addEventListener('change', async e => {
+  await handleFile(e.target.files[0]);
+  e.target.value = '';
+});
+
+// ── PDF Extraction — Netlify Function ────────────────────
+// Sends PDF to serverless function which runs pdftotext server-side.
+// No browser-side PDF parsing — 100% reliable.
+async function extractAWB(arrayBuffer) {
+  // Convert ArrayBuffer to base64
+  const bytes  = new Uint8Array(arrayBuffer);
+  let binary   = '';
+  for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+  const base64 = btoa(binary);
+
+  const resp = await fetch('/api/extract', {
+    method : 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body   : JSON.stringify({ pdf: base64 })
+  });
+
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({ error: `Server error ${resp.status}` }));
+    throw new Error(err.error || `Server error ${resp.status}`);
+  }
+
+  const data = await resp.json();
+  if (data.error) throw new Error(data.error);
+
+  return {
+    awbNumber : data.awbNumber || '312-XXXXXXXX',
+    wc        : data.wc,
+    da        : data.da,
+    dc        : data.dc,
+    cw        : data.cw,
+    tp        : data.tp
+  };
+}
+
+function checkExtracted(data) {
+  if (!data.wc)         throw new Error('Weight Charge नहीं मिला — IndiGo AWB PDF use करो');
+  if (data.da === null) throw new Error('Due Agent value नहीं मिली');
+  if (!data.dc)         throw new Error('Due Carrier नहीं मिला');
+}
+
+// ── Mode Switch ───────────────────────────────────────────
+function switchMode(mode) {
+  if (!pdfBytes) return;
+  activeMode = mode;
+
+  // Reset button states
+  $('modePerKg').classList.remove('active', 'active-orange');
+  $('modeDiscount').classList.remove('active', 'active-orange');
+
+  if (mode === 'perkg') {
+    $('modePerKg').classList.add('active');
+    hide('discCard');
+    show('perKgCard');
+    runPerKg();
+  } else {
+    $('modeDiscount').classList.add('active-orange');
+    hide('perKgCard');
+    show('discCard');
+    runDiscount();
+  }
+}
+
+// ── PER KG MODE ───────────────────────────────────────────
+async function runPerKg() {
+  // Reset
+  hide('pkAwbBadge'); hide('pkDataGrid'); hide('pkResult'); hide('pkErr');
+  $('pkDivider').style.display = 'none';
+  show('pkExtracting');
+
+  try {
+    if (!extracted) {
+      extracted = await extractAWB(pdfBytes.slice(0));
+    }
+    checkExtracted(extracted);
+
+    const wc  = r2(extracted.wc);
+    const da  = r2(extracted.da);
+    const dc  = r2(extracted.dc);
+    const cw  = extracted.cw ? r2(extracted.cw) : null;
+    const cp  = r2(wc + da + dc);
+    const gst = r2(cp * 0.18);
+    const tot = r2(cp + gst);
+
+    // Populate
+    $('pkAwbNum').textContent = extracted.awbNumber;
+    $('pkWc').textContent     = '₹ ' + fmt(wc);
+    $('pkDa').textContent     = '₹ ' + fmt(da);
+    $('pkDc').textContent     = '₹ ' + fmt(dc);
+    $('pkCw').textContent     = cw ? cw + ' kg' : 'N/A';
+    $('pkBase').textContent   = '₹ ' + fmt(cp);
+    $('pkGst').textContent    = '₹ ' + fmt(gst);
+    $('pkTotal').textContent  = '₹ ' + fmt(tot);
+
+    hide('pkExtracting');
+    show('pkAwbBadge'); show('pkDataGrid');
+    $('pkDivider').style.display = '';
+
+    if (cw && cw > 0) {
+      const rate = r2(tot / cw);
+      $('pkRate').textContent   = '₹ ' + fmt(rate);
+      $('pkCalcStr').textContent = fmt(tot) + ' ÷ ' + cw + ' kg';
+      show('pkResult');
+    } else {
+      $('pkErr').textContent = '⚠ Chargeable Weight PDF से नहीं मिला। Normal AWB format check करो।';
+      show('pkErr');
+    }
+
+  } catch (err) {
+    hide('pkExtracting');
+    $('pkErr').textContent = '⚠ ' + err.message;
+    show('pkErr');
+  }
+}
+
+// ── DISCOUNT MODE ─────────────────────────────────────────
+async function runDiscount() {
+  hide('discInfo'); hide('discResult'); hide('discCardErr');
+  show('discExtracting');
+
+  try {
+    if (!extracted) {
+      extracted = await extractAWB(pdfBytes.slice(0));
+    }
+    if (!extracted.wc) throw new Error('Weight Charge नहीं मिला');
+
+    $('discAwbNum').textContent = extracted.awbNumber;
+    $('discWcVal').textContent  = '₹ ' + fmt(r2(extracted.wc));
+    $('discCwVal').textContent  = extracted.cw ? extracted.cw + ' kg' : 'N/A';
+    hide('discExtracting');
+    show('discInfo');
+    clearDiscResult();
+
+  } catch (err) {
+    hide('discExtracting');
+    $('discCardErr').textContent = '⚠ ' + err.message;
+    show('discCardErr');
+  }
+}
+
+// ── Discount Tab ──────────────────────────────────────────
+function discPickTab(tab) {
+  discTab = tab;
+  $('tabRupee').classList.toggle('active', tab === 'rupee');
+  $('tabPct').classList.toggle('active', tab === 'pct');
+  if (tab === 'rupee') { show('rupeeWrap'); hide('pctWrap'); }
+  else                 { hide('rupeeWrap'); show('pctWrap'); }
+  clearDiscResult();
+}
+
+function clearDiscResult() {
+  hide('discResult');
+  hide('discErr');
+}
+
+// ── Calculate Discount ────────────────────────────────────
+function calcDiscount(e) {
+  addRipple(e.currentTarget, e);
+  hide('discErr'); hide('discResult');
+
+  const wc = r2(extracted?.wc || 0);
+  const cw = extracted?.cw || 0;
+  if (!wc) { showDiscErr('Weight Charge available नहीं है'); return; }
+
+  let discAmt, discLabel, calcStr;
+
+  if (discTab === 'rupee') {
+    // New logic: val × CW = discount amount
+    const val = parseFloat($('discRupeeInput').value);
+    if (isNaN(val) || val <= 0) { showDiscErr('Rate per kg भरो (e.g. 5)'); return; }
+    if (!cw || cw <= 0)         { showDiscErr('Chargeable Weight PDF से नहीं मिला'); return; }
+    discAmt  = r2(val * cw);
+    calcStr  = '₹' + val + ' × ' + cw + ' kg = ₹' + fmt(discAmt);
+    discLabel = '− ₹ ' + fmt(discAmt);
+    $('drCalcLbl').textContent = 'Rate × Chargeable Wt';
+    $('drCalc').textContent    = calcStr;
+    $('drDiscLbl').textContent = 'Discount (₹' + val + '/kg)';
+    $('drCalcRow').style.display = '';
+    if (discAmt >= wc) { showDiscErr(`Discount ₹${fmt(discAmt)} ≥ Weight Charge ₹${fmt(wc)} — impossible!`); return; }
+  } else {
+    // % mode: WC × pct%
+    const pct = parseFloat($('discPctInput').value);
+    if (isNaN(pct) || pct <= 0)  { showDiscErr('Percentage भरो (e.g. 12)'); return; }
+    if (pct >= 100)               { showDiscErr('Percentage 100 से कम होनी चाहिए'); return; }
+    discAmt   = r2(wc * pct / 100);
+    discLabel = '− ₹ ' + fmt(discAmt);
+    $('drCalcLbl').textContent = 'Calculation';
+    $('drCalc').textContent    = fmt(wc) + ' × ' + pct + '% = ₹' + fmt(discAmt);
+    $('drDiscLbl').textContent = 'Discount (' + pct + '%)';
+    $('drCalcRow').style.display = '';
+  }
+
+  const final = r2(wc - discAmt);
+
+  $('drWc').textContent    = '₹ ' + fmt(wc);
+  $('drDisc').textContent  = discLabel;
+  $('drFinal').textContent = '₹ ' + fmt(final);
+  show('discResult');
+
+  setTimeout(() => $('discResult').scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+}
+
+function showDiscErr(msg) {
+  $('discErr').textContent = '⚠ ' + msg; show('discErr');
+}
+
+// ── Ripple Effect ─────────────────────────────────────────
+function addRipple(el, e) {
+  const rect = el.getBoundingClientRect();
+  const x = (e.clientX || rect.left + rect.width/2) - rect.left;
+  const y = (e.clientY || rect.top + rect.height/2) - rect.top;
+  const size = Math.max(rect.width, rect.height) * 1.5;
+  const ripple = document.createElement('span');
+  ripple.className = 'ripple';
+  ripple.style.cssText = `width:${size}px;height:${size}px;left:${x-size/2}px;top:${y-size/2}px`;
+  el.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 600);
+}
+</script>
+</body>
+</html>
