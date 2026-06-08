@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pccs-rate-v5.3';
+const CACHE_NAME = 'pccs-rate-v5.4';
 const LOCAL_ASSETS = [
   './',
   './index.html',

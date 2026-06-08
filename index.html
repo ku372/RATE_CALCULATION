@@ -320,10 +320,20 @@ body {
   color: var(--muted); letter-spacing: 0.5px;
   transition: all 0.25s;
 }
-.disc-tab.active {
-  background: linear-gradient(135deg, rgba(255,140,66,0.2), rgba(255,140,66,0.1));
-  color: var(--accent2);
-  box-shadow: 0 0 0 1px rgba(255,140,66,0.25);
+.disc-tab.active-kg {
+  background: rgba(0,198,255,0.13);
+  color: #00c6ff;
+  box-shadow: 0 0 0 1px rgba(0,198,255,0.3);
+}
+.disc-tab.active-pct {
+  background: rgba(34,197,94,0.13);
+  color: #22c55e;
+  box-shadow: 0 0 0 1px rgba(34,197,94,0.3);
+}
+.disc-tab.active-flat {
+  background: rgba(168,85,247,0.13);
+  color: #a855f7;
+  box-shadow: 0 0 0 1px rgba(168,85,247,0.3);
 }
 
 /* ── Input ───────────────────────────────────────────────── */
@@ -371,34 +381,38 @@ body {
 .calc-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
 /* ── Discount Result ─────────────────────────────────────── */
-.disc-result {
-  background: linear-gradient(135deg, rgba(255,140,66,0.08), rgba(255,209,102,0.05));
-  border: 1.5px solid rgba(255,140,66,0.25);
-  border-radius: 16px; padding: 20px 18px;
-  animation: cardIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-}
+.disc-result { border-radius: 16px; padding: 16px 16px 0; animation: cardIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both; }
 .disc-result.hidden { display: none; }
+.disc-result.res-kg   { background: rgba(0,198,255,0.06);   border: 1.5px solid rgba(0,198,255,0.25); }
+.disc-result.res-pct  { background: rgba(34,197,94,0.06);   border: 1.5px solid rgba(34,197,94,0.25); }
+.disc-result.res-flat { background: rgba(168,85,247,0.06);  border: 1.5px solid rgba(168,85,247,0.25); }
 
 .disc-result-row {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 8px 0; border-bottom: 1px solid rgba(255,140,66,0.1);
+  padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.06);
 }
-.disc-result-row:last-child { border-bottom: none; padding-bottom: 0; }
-.disc-result-row.final {
-  padding-top: 12px; margin-top: 4px;
-  border-top: 1px solid rgba(255,140,66,0.2); border-bottom: none;
+.disc-result-row:last-child { border-bottom: none; }
+.drr-lbl { font-size: 0.7rem; color: var(--muted); font-family: 'Space Mono', monospace; }
+.drr-val { font-family: 'Space Mono', monospace; font-size: 0.88rem; font-weight: 700; color: var(--text); }
+.drr-val.red { color: var(--red); }
+
+/* Per-kg result hero box */
+.disc-hero {
+  margin: 14px -16px 0; padding: 18px 16px;
+  border-radius: 0 0 14px 14px;
+  text-align: center;
 }
-.drr-lbl { font-size: 0.72rem; color: var(--muted); font-family: 'Space Mono', monospace; }
-.drr-val {
-  font-family: 'Space Mono', monospace; font-size: 0.9rem; font-weight: 700;
-  color: var(--text);
-}
-.drr-val.red  { color: var(--red); }
-.drr-val.big  {
-  font-family: 'Space Mono', monospace; font-size: 1.4rem; font-weight: 700;
-  color: #ffb347;
+.res-kg   .disc-hero { background: rgba(0,198,255,0.12); }
+.res-pct  .disc-hero { background: rgba(34,197,94,0.12); }
+.res-flat .disc-hero { background: rgba(168,85,247,0.12); }
+.disc-hero-val {
+  font-family: 'Space Mono', monospace; font-size: 1.6rem; font-weight: 700;
   animation: fadeUp 0.3s ease-out both;
 }
+.res-kg   .disc-hero-val { color: #00c6ff; }
+.res-pct  .disc-hero-val { color: #22c55e; }
+.res-flat .disc-hero-val { color: #a855f7; }
+.disc-hero-sub { font-size: 0.68rem; color: var(--muted); margin-top: 3px; }
 
 /* ── Error ───────────────────────────────────────────────── */
 .err-box {
@@ -624,15 +638,16 @@ body {
 
       <!-- Tabs -->
       <div class="disc-tabs">
-        <button class="disc-tab active" id="tabRupee" onclick="discPickTab('rupee')">₹ Rupees</button>
-        <button class="disc-tab" id="tabPct" onclick="discPickTab('pct')">% Percentage</button>
+        <button class="disc-tab active-kg" id="tabRupee" onclick="discPickTab('rupee')">₹/kg</button>
+        <button class="disc-tab" id="tabPct" onclick="discPickTab('pct')">% Rate</button>
+        <button class="disc-tab" id="tabFlat" onclick="discPickTab('flat')">Flat ₹</button>
       </div>
 
-      <!-- Rupee input -->
+      <!-- Rate/kg input -->
       <div class="input-wrap" id="rupeeWrap">
         <span class="input-prefix">₹</span>
         <input type="number" class="input-field" id="discRupeeInput"
-               inputmode="decimal" step="0.01" placeholder="Rate per kg (e.g. 5)"
+               inputmode="decimal" step="0.01" placeholder="Discount per kg (e.g. 2)"
                oninput="clearDiscResult()">
       </div>
 
@@ -640,7 +655,15 @@ body {
       <div class="input-wrap hidden" id="pctWrap">
         <span class="input-prefix">%</span>
         <input type="number" class="input-field" id="discPctInput"
-               inputmode="decimal" step="0.01" min="0" max="100" placeholder="Discount % (e.g. 12)"
+               inputmode="decimal" step="0.01" min="0" max="100" placeholder="Discount % of WC (e.g. 10)"
+               oninput="clearDiscResult()">
+      </div>
+
+      <!-- Flat Rs input -->
+      <div class="input-wrap hidden" id="flatWrap">
+        <span class="input-prefix">₹</span>
+        <input type="number" class="input-field" id="discFlatInput"
+               inputmode="decimal" step="0.01" placeholder="Flat discount amount (e.g. 350)"
                oninput="clearDiscResult()">
       </div>
 
@@ -656,20 +679,24 @@ body {
     <!-- Discount Result -->
     <div class="disc-result hidden" id="discResult">
       <div class="disc-result-row" id="drCalcRow">
-        <span class="drr-lbl" id="drCalcLbl">Calc</span>
+        <span class="drr-lbl" id="drCalcLbl">Calculation</span>
         <span class="drr-val" id="drCalc">—</span>
       </div>
       <div class="disc-result-row">
-        <span class="drr-lbl">Weight Charge</span>
-        <span class="drr-val" id="drWc">—</span>
+        <span class="drr-lbl">Total Prepaid (with GST)</span>
+        <span class="drr-val" id="drTp">—</span>
       </div>
       <div class="disc-result-row">
         <span class="drr-lbl" id="drDiscLbl">Discount</span>
         <span class="drr-val red" id="drDisc">—</span>
       </div>
-      <div class="disc-result-row final">
-        <span class="drr-lbl">After Discount</span>
-        <span class="drr-val big" id="drFinal">—</span>
+      <div class="disc-result-row">
+        <span class="drr-lbl">Net Amount</span>
+        <span class="drr-val" id="drNet">—</span>
+      </div>
+      <div class="disc-hero">
+        <div class="disc-hero-val" id="drFinal">—</div>
+        <div class="disc-hero-sub" id="drFinalSub">per kg (after discount)</div>
       </div>
     </div>
 
@@ -716,7 +743,7 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catc
 window.addEventListener('load', async () => {
   if (location.search.includes('shared=1') && 'caches' in window) {
     try {
-      const cache = await caches.open('pccs-rate-v5.3');
+      const cache = await caches.open('pccs-rate-v5.4');
       const resp  = await cache.match('/__shared_pdf__');
       if (resp) {
         const blob     = await resp.blob();
@@ -976,12 +1003,18 @@ async function runDiscount() {
 // ── Discount Tab ──────────────────────────────────────────
 function discPickTab(tab) {
   discTab = tab;
-  $('tabRupee').classList.toggle('active', tab === 'rupee');
-  $('tabPct').classList.toggle('active', tab === 'pct');
-  if (tab === 'rupee') { show('rupeeWrap'); hide('pctWrap'); }
-  else                 { hide('rupeeWrap'); show('pctWrap'); }
+  // Clear all tab active classes
+  ['tabRupee','tabPct','tabFlat'].forEach(id =>
+    $$(id).classList.remove('active-kg','active-pct','active-flat'));
+  // Hide all inputs
+  ['rupeeWrap','pctWrap','flatWrap'].forEach(hide);
+  // Set active
+  if (tab === 'rupee') { $('tabRupee').classList.add('active-kg');   show('rupeeWrap'); }
+  if (tab === 'pct')   { $('tabPct').classList.add('active-pct');    show('pctWrap');   }
+  if (tab === 'flat')  { $('tabFlat').classList.add('active-flat');  show('flatWrap');  }
   clearDiscResult();
 }
+function $$(id) { return document.getElementById(id); }
 
 function clearDiscResult() {
   hide('discResult');
@@ -994,44 +1027,63 @@ function calcDiscount(e) {
   hide('discErr'); hide('discResult');
 
   const wc = r2(extracted?.wc || 0);
+  const da = r2(extracted?.da || 0);
+  const dc = r2(extracted?.dc || 0);
   const cw = extracted?.cw || 0;
   if (!wc) { showDiscErr('Weight Charge available नहीं है'); return; }
+  if (!cw) { showDiscErr('Chargeable Weight PDF से नहीं मिला'); return; }
 
-  let discAmt, discLabel, calcStr;
+  // Total Prepaid with GST = (WC + DA + DC) × 1.18
+  const base = r2(wc + da + dc);
+  const tp   = r2(base * 1.18);
+
+  let discAmt, calcStr;
 
   if (discTab === 'rupee') {
-    // New logic: val × CW = discount amount
     const val = parseFloat($('discRupeeInput').value);
-    if (isNaN(val) || val <= 0) { showDiscErr('Rate per kg भरो (e.g. 5)'); return; }
-    if (!cw || cw <= 0)         { showDiscErr('Chargeable Weight PDF से नहीं मिला'); return; }
-    discAmt  = r2(val * cw);
-    calcStr  = '₹' + val + ' × ' + cw + ' kg = ₹' + fmt(discAmt);
-    discLabel = '− ₹ ' + fmt(discAmt);
-    $('drCalcLbl').textContent = 'Rate × Chargeable Wt';
-    $('drCalc').textContent    = calcStr;
+    if (isNaN(val) || val <= 0) { showDiscErr('Discount per kg भरो (e.g. 2)'); return; }
+    discAmt = r2(val * cw);
+    calcStr = cw + ' kg × ₹' + val + ' = ₹' + fmt(discAmt);
+    $('drCalcLbl').textContent = 'CW × Rate/kg';
     $('drDiscLbl').textContent = 'Discount (₹' + val + '/kg)';
-    $('drCalcRow').style.display = '';
-    if (discAmt >= wc) { showDiscErr(`Discount ₹${fmt(discAmt)} ≥ Weight Charge ₹${fmt(wc)} — impossible!`); return; }
-  } else {
-    // % mode: WC × pct%
+
+  } else if (discTab === 'pct') {
     const pct = parseFloat($('discPctInput').value);
-    if (isNaN(pct) || pct <= 0)  { showDiscErr('Percentage भरो (e.g. 12)'); return; }
-    if (pct >= 100)               { showDiscErr('Percentage 100 से कम होनी चाहिए'); return; }
-    discAmt   = r2(wc * pct / 100);
-    discLabel = '− ₹ ' + fmt(discAmt);
-    $('drCalcLbl').textContent = 'Calculation';
-    $('drCalc').textContent    = fmt(wc) + ' × ' + pct + '% = ₹' + fmt(discAmt);
+    if (isNaN(pct) || pct <= 0) { showDiscErr('Percentage भरो (e.g. 10)'); return; }
+    if (pct >= 100)              { showDiscErr('Percentage 100 से कम होनी चाहिए'); return; }
+    discAmt = r2(wc * pct / 100);
+    calcStr = '₹' + fmt(wc) + ' × ' + pct + '% = ₹' + fmt(discAmt);
+    $('drCalcLbl').textContent = 'WC × Percent';
     $('drDiscLbl').textContent = 'Discount (' + pct + '%)';
-    $('drCalcRow').style.display = '';
+
+  } else {
+    const flat = parseFloat($('discFlatInput').value);
+    if (isNaN(flat) || flat <= 0) { showDiscErr('Flat discount amount भरो (e.g. 350)'); return; }
+    discAmt = r2(flat);
+    calcStr = 'Flat ₹' + fmt(flat);
+    $('drCalcLbl').textContent = 'Flat Discount';
+    $('drDiscLbl').textContent = 'Flat Discount';
   }
 
-  const final = r2(wc - discAmt);
+  if (discAmt >= tp) { showDiscErr('Discount Total Prepaid से ज़्यादा नहीं हो सकता!'); return; }
 
-  $('drWc').textContent    = '₹ ' + fmt(wc);
-  $('drDisc').textContent  = discLabel;
-  $('drFinal').textContent = '₹ ' + fmt(final);
+  const net    = r2(tp - discAmt);
+  const perKg  = r2(net / cw);
+
+  // Result color class
+  const cls = discTab === 'rupee' ? 'res-kg' : discTab === 'pct' ? 'res-pct' : 'res-flat';
+  const el  = $('discResult');
+  el.classList.remove('res-kg','res-pct','res-flat');
+  el.classList.add(cls);
+
+  $('drCalc').textContent  = calcStr;
+  $('drTp').textContent    = '₹ ' + fmt(tp);
+  $('drDisc').textContent  = '− ₹ ' + fmt(discAmt);
+  $('drNet').textContent   = '₹ ' + fmt(net);
+  $('drFinal').textContent = '₹ ' + perKg.toFixed(2);
+  $('drFinalSub').textContent = 'per kg  ·  CW ' + cw + ' kg';
+
   show('discResult');
-
   setTimeout(() => $('discResult').scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
 }
 
